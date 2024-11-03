@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import Book from "../models/book";
 
 // Tambah buku baru ke MongoDB

@@ -1,87 +1,76 @@
-name: Docker CI/CD
+name: CI/CD Pipeline
 
+# Trigger workflows pada push dan pull request di semua branches
 on:
   push:
     branches:
-      - main
-      - master
+      - "main"
+      - "master"
+      - "feature/**"
+      - "bugfix/**"
   pull_request:
     branches:
-      - main
-      - master
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+      - "main"
+      - "master"
 
 jobs:
+  # Job untuk build dan test
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongo --eval 'db.adminCommand("ping")'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to GitHub Container registry
-        uses: docker/login-action@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: "18" # sesuaikan versi Node.js sesuai kebutuhan proyek
 
-      - name: Build and test
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          load: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Install dependencies
+        run: npm install
 
-      - name: Run tests in container
-        run: |
-          docker-compose -f docker-compose.test.yml up --exit-code-from app
+      - name: Run lint
+        run: npm run lint
 
-  deploy:
+      - name: Run tests
+        env:
+          MONGODB_URI: "mongodb+srv://rakapradana1103:HoI6nJEEfNT3akdy@cluster-test.npvte.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster-test" # URI MongoDB untuk testing
+        run: npm run tes
+
+  # Job untuk build dan push ke Docker Hub (hanya untuk main/master branch)
+  docker:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to GitHub Container registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build and tag Docker image
+        run: |
+          docker build -t your-dockerhub-username/your-image-name:latest .
+          docker tag your-dockerhub-username/your-image-name:latest your-dockerhub-username/your-image-name:${{ github.sha }}
 
-      - name: Deploy to production
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            cd /opt/app
-            docker-compose pull
-            docker-compose up -d
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push your-dockerhub-username/your-image-name:latest
+          docker push your-dockerhub-username/your-image-name:${{ github.sha }}

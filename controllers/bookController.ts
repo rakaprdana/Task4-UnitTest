@@ -7,9 +7,17 @@ export const addBook = async (req: Request, res: Response): Promise<void> => {
     const { title, author, code, description } = req.body;
     const newBook = new Book({ title, author, code, description });
     await newBook.save();
-    res.status(201).json(newBook);
+
+    // Mengembalikan respons dengan ID yang dihasilkan dan data buku lainnya
+    res.status(201).json({
+      id: newBook._id,
+      title: newBook.title,
+      author: newBook.author,
+      code: newBook.code,
+      description: newBook.description,
+    });
   } catch (error: any) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -35,11 +43,12 @@ export const getBookById = async (
     const book = await Book.findById(req.params.id);
     if (!book) {
       res.status(404).json({ message: "Book not found" });
-      return;
     }
     res.json(book);
-  } catch (error) {
-    res.status(500).json({ message: "Error retrieving book", error });
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: "Error retrieving book", error: error.message });
   }
 };
 

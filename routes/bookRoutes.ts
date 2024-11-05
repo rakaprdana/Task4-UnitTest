@@ -6,6 +6,7 @@ import {
   updateBook,
   deleteBook,
 } from "../controllers/bookController";
+import { Session } from "express-session";
 import authMiddleware from "../middlewares/authMiddleware";
 
 const router = express.Router();

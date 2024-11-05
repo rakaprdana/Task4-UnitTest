@@ -13,6 +13,7 @@ const router = express.Router();
 router.post("/login", (req: Request, res: Response) => {
   const { username, password } = req.body;
   if (username === "admin" && password === "password") {
+    req.session.loggedIn = true;
     res.json({ message: "Login successful" });
   } else {
     res.status(401).json({ message: "Invalid credentials" });

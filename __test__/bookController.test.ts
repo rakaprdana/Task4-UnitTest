@@ -81,6 +81,7 @@ describe("Book Controller", () => {
     );
   }, 10000);
 
+  // Test untuk mengambil buku berdasarkan ID
   it("should get a book by id", async () => {
     const book = new Book({
       title: "Another Sample Book",
@@ -143,6 +144,7 @@ describe("Book Controller", () => {
     });
     await book.save();
 
+    // Menggunakan fungsi deleteBook
     await request(app)
       .delete(`/api/books/${book._id}`)
       .set("Cookie", cookie)

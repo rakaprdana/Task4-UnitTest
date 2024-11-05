@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18" # sesuaikan versi Node.js sesuai kebutuhan proyek
+          node-version: "18"
 
       - name: Install dependencies
         run: npm install
@@ -48,29 +48,3 @@ jobs:
         env:
           MONGODB_URI: "mongodb+srv://rakapradana1103:HoI6nJEEfNT3akdy@cluster-test.npvte.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster-test" # URI MongoDB untuk testing
         run: npm run tes
-
-  # Job untuk build dan push ke Docker Hub (hanya untuk main/master branch)
-  docker:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    needs: build-and-test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and tag Docker image
-        run: |
-          docker build -t your-dockerhub-username/your-image-name:latest .
-          docker tag your-dockerhub-username/your-image-name:latest your-dockerhub-username/your-image-name:${{ github.sha }}
-
-      - name: Push Docker image to Docker Hub
-        run: |
-          docker push your-dockerhub-username/your-image-name:latest
-          docker push your-dockerhub-username/your-image-name:${{ github.sha }}

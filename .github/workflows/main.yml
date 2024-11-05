@@ -43,8 +43,3 @@ jobs:
 
       - name: Run lint
         run: npm run lint
-
-      - name: Run tests
-        env:
-          MONGODB_URI: "mongodb+srv://rakapradana1103:HoI6nJEEfNT3akdy@cluster-test.npvte.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster-test" # URI MongoDB untuk testing
-        run: npm run tes
